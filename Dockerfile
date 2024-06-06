@@ -1,15 +1,12 @@
-# Use the specified pre-built container as the base image
-FROM bpasunuri/webapp:latest
+# Use the pre-built container as the base image
+FROM bpasunuri/webapp
 
-# Set the working directory to /var/www/html
-WORKDIR /var/www/html
+# Copy the application code to the web server directory
+COPY . /var/www/html
 
-# Copy the content
-COPY . .
+# Expose port 80 to the outside world
+EXPOSE 80
 
-# Expose port 80
-EXPOSE 82
-
-# Start the web server
-CMD ["apache2-foreground"]
+# Define the default command to run when starting the container
+CMD ["apache2ctl", "-D", "FOREGROUND"]
 
