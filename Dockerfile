@@ -5,7 +5,7 @@ FROM bpasunuri/webapp:latest
 WORKDIR /var/www/html
 
 # Copy the content
-COPY /home/ubuntu/website /var/www/html
+COPY . .
 
 # Expose port 80
 EXPOSE 80
