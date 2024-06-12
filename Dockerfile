@@ -1,14 +1,10 @@
-# Use an official web server as a parent image
-FROM nginx:latest
+FROM bpasunuri/webapp
 
-# Set the working directory to /var/www/html
-WORKDIR /var/www/html
-
-# Copy the current directory contents into the container at /var/www/html
+# Copy your application files to the web server directory
 COPY . /var/www/html
 
 # Expose port 80
 EXPOSE 80
 
-# Start nginx when the container launches
+# Start Nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
