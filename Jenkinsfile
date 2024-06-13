@@ -39,7 +39,7 @@ pipeline {
         
         stage('Trigger Test Job') {
             when {
-                branch 'develop'
+                expression { env.BRANCH_NAME == 'develop' }
             }
             steps {
                 script {
