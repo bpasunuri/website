@@ -1,48 +1,61 @@
 pipeline {
     agent any
-
+    
     environment {
-        DOCKER_IMAGE = 'bpasunuri/webapp'
-        GITHUB_REPO = 'https://github.com/bpasunuri/website.git'
-        DOCKER_REGISTRY_CREDENTIALS = 'docker-hub-credentials' // Update with your Jenkins Docker Hub credentials ID
-        BRANCH_NAME = "${env.BRANCH_NAME ?: 'master'}" // Default to 'master' if not provided
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-credentials'
     }
-
+    
     stages {
-        stage('Pull Code and Build Docker Image') {
+        stage('Checkout') {
             steps {
                 script {
-                    // Clone the GitHub repository
-                    git branch: "${BRANCH_NAME}", url: "${GITHUB_REPO}"
-                    // Build the Docker image
-                    def image = docker.build(DOCKER_IMAGE)
-                    // Push the Docker image to Docker Hub
-                    withDockerRegistry([credentialsId: DOCKER_REGISTRY_CREDENTIALS, url: '']) {
-                        image.push()
+                    // Checkout from the 'develop' branch
+                    checkout([$class: 'GitSCM',
+                              branches: [[name: '*/develop']],
+                              userRemoteConfigs: [[url: 'https://github.com/bpasunuri/website.git']]])
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build Docker image
+                    docker.build("bpasunuri/webapp")
+                }
+            }
+        }
+        
+        stage('Push Docker Image to Docker Hub') {
+            steps {
+                script {
+                    // Push Docker image to Docker Hub
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
+                        docker.image("bpasunuri/webapp").push()
                     }
                 }
             }
         }
-
-        stage('Test and Deploy') {
+        
+        stage('Trigger Test Job') {
             when {
-                anyOf {
-                    branch 'master'
-                    branch 'develop'
-                }
+                branch 'develop'
             }
             steps {
                 script {
-                    if (BRANCH_NAME == 'master') {
-                        build job: 'Test'
-                        build job: 'Prod'
-                    } else if (BRANCH_NAME == 'develop') {
-                        build job: 'Test'
-                    } else {
-                        echo "No downstream jobs triggered for branch: ${BRANCH_NAME}"
-                    }
+                    // Trigger downstream test job
+                    build job: 'Test', wait: false
                 }
             }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
