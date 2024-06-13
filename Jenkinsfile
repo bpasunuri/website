@@ -9,10 +9,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    // Checkout from the 'develop' branch
-                    checkout([$class: 'GitSCM',
-                              branches: [[name: '*/develop']],
-                              userRemoteConfigs: [[url: 'https://github.com/bpasunuri/website.git']]])
+                    // Checkout from any branch
+                    checkout scm
                 }
             }
         }
@@ -20,7 +18,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image
+                    // Build Docker image (if needed)
                     docker.build("bpasunuri/webapp")
                 }
             }
@@ -29,7 +27,7 @@ pipeline {
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    // Push Docker image to Docker Hub
+                    // Push Docker image to Docker Hub (if needed)
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
                         docker.image("bpasunuri/webapp").push()
                     }
@@ -38,9 +36,6 @@ pipeline {
         }
         
         stage('Trigger Test Job') {
-            when {
-                expression { env.BRANCH_NAME == 'develop' }
-            }
             steps {
                 script {
                     // Trigger downstream test job
